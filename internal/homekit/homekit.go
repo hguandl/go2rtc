@@ -2,6 +2,7 @@ package homekit
 
 import (
 	"errors"
+	"net"
 	"net/http"
 	"strings"
 
@@ -22,6 +23,7 @@ func Init() {
 		Mod map[string]struct {
 			Pin           string   `yaml:"pin"`
 			Name          string   `yaml:"name"`
+			IP            string   `yaml:"ip"`
 			DeviceID      string   `yaml:"device_id"`
 			DevicePrivate string   `yaml:"device_private"`
 			CategoryID    string   `yaml:"category_id"`
@@ -47,6 +49,14 @@ func Init() {
 	var entries []*mdns.ServiceEntry
 
 	for id, conf := range cfg.Mod {
+		var ip net.IP
+		if conf.IP != "" {
+			ip = net.ParseIP(conf.IP).To4()
+			if ip == nil {
+				log.Error().Str("stream", id).Msg("[homekit] invalid IPv4 address")
+				continue
+			}
+		}
 		stream := streams.Get(id)
 		if stream == nil {
 			log.Warn().Msgf("[homekit] missing stream: %s", id)
@@ -82,6 +92,7 @@ func Init() {
 
 		srv.mdns = &mdns.ServiceEntry{
 			Name: name,
+			IP:   ip,
 			Port: uint16(api.Port),
 			Info: map[string]string{
 				hap.TXTConfigNumber: "1",

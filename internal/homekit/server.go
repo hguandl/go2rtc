@@ -273,6 +273,14 @@ func (s *server) SetCharacteristic(conn net.Conn, aid uint8, iid uint64, value a
 			return
 		}
 
+		log.Debug().
+			Str("stream", s.stream).
+			Str("remote", conn.RemoteAddr().String()).
+			Str("media_ip", offer.Address.IPAddr).
+			Uint16("video_port", offer.Address.VideoRTPPort).
+			Uint16("audio_port", offer.Address.AudioRTPPort).
+			Msg("[homekit] media offer")
+
 		consumer := homekit.NewConsumer(conn, srtp2.Server)
 		consumer.SetOffer(&offer)
 		s.consumer = consumer

@@ -81,6 +81,22 @@ homekit:
     device_private: dahua1  # custom key, default: generated from stream ID
 ```
 
+**Multiple network interfaces**
+
+Use the same local IPv4 address for API, SRTP and Bonjour to avoid IP address mismatches:
+
+```yaml
+api:
+  listen: "192.168.1.100:1984"
+
+srtp:
+  listen: "192.168.1.100:8443"
+
+homekit:
+  dahua1:
+    ip: "192.168.1.100"
+```
+
 **Proxy HomeKit camera**
 
 - Video stream from HomeKit camera to Apple device (iPhone, Apple TV) will be transmitted directly

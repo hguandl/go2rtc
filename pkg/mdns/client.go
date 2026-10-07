@@ -178,19 +178,10 @@ func (b *Browser) ListenMulticastUDP() error {
 	}
 
 	// 2. Create senders
-	lc1 := net.ListenConfig{
-		Control: func(network, address string, c syscall.RawConn) error {
-			return c.Control(func(fd uintptr) {
-				// 1. Allow multicast UDP to listen concurrently across multiple listeners
-				_ = SetsockoptInt(fd, syscall.SOL_SOCKET, syscall.SO_REUSEADDR, 1)
-			})
-		},
-	}
-
 	ctx := context.Background()
 
 	for _, ipn := range nets {
-		conn, err := lc1.ListenPacket(ctx, "udp4", ipn.IP.String()+":5353") // same port important
+		conn, err := listenMulticastSender(ctx, ipn.IP)
 		if err != nil {
 			continue
 		}
@@ -218,9 +209,8 @@ func (b *Browser) ListenMulticastUDP() error {
 				}
 				_ = SetsockoptIPMreq(fd, syscall.IPPROTO_IP, syscall.IP_ADD_MEMBERSHIP, mreq)
 
-				for _, send := range b.Sends {
-					addr := send.LocalAddr().(*net.UDPAddr)
-					mreq.Interface = [4]byte(addr.IP.To4())
+				for _, ipn := range b.Nets {
+					mreq.Interface = [4]byte(ipn.IP.To4())
 					_ = SetsockoptIPMreq(fd, syscall.IPPROTO_IP, syscall.IP_ADD_MEMBERSHIP, mreq)
 				}
 			})
